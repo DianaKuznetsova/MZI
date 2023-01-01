@@ -28,11 +28,18 @@ class Gost3410_94_Signer(
         val mRev: UByteArray = messageHash.reversedArray() // conversion is little-endian
         val m = BigInteger(1, mRev.toByteArray())
         var k: BigInteger
+
+        var r: BigInteger
+        var s: BigInteger
+
         do {
-            k = createRandomBigInteger(q.bitLength(), random)
-        } while (k >= q)
-        val r: BigInteger = a.modPow(k, p).mod(q)
-        val s = k.multiply(m).add(privateKey.multiply(r)).mod(q)
+            do {
+                k = createRandomBigInteger(q.bitLength(), random)
+            } while (k <= BigInteger.ZERO || k >= q)
+            r = a.modPow(k, p).mod(q)
+            s = k.multiply(m).add(privateKey.multiply(r)).mod(q)
+        } while (r == BigInteger.ZERO || s == BigInteger.ZERO)
+
         return r to s
     }
 
